@@ -1,4 +1,4 @@
-#ifndef _I_IMAGE_READER_WRITER_H_
+﻿#ifndef _I_IMAGE_READER_WRITER_H_
 #define _I_IMAGE_READER_WRITER_H_
 
 namespace mi {

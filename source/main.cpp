@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <string>
 
 #include "miImage/miImage.h"
@@ -10,36 +10,41 @@
 
 void Stereo(int i = 1)
 {
-    mi::Image left("input/color_left.bmp");
-    mi::Image right("input/color_right.bmp");
+    mi::Image left("color_left.bmp");
+    mi::Image right("color_right.bmp");
     mi::Image stereo(left.Bit(), left.Width(), left.Height());
 
-    DPMS dpms(left, right);
-    
+    DPMS dpms(left, right, 1);
+
     int disparity = 100;
-    
+
     while(i-->0)
     {
         auto start = std::chrono::system_clock::now();
 
         // skip 8
-        dpms.DP(8, disparity);
+
+		std::cout << "x" << std::endl;
+
+        dpms.DP(1, disparity);
+
+		std::cout << "x" << std::endl;
+
 
         for(int iY=0; iY<stereo.Height(); iY++) {
             std::vector<int>& match = dpms.GetMatchPattern(iY);
             for(int iX=0; iX<stereo.Width(); iX++) {
                 stereo.pixel[iX][iY].r = std::min(std::abs(match[iX] - iX) * 255.0/ disparity, 255.0);
                 stereo.pixel[iX][iY].b = stereo.pixel[iX][iY].g = stereo.pixel[iX][iY].r;
-/*
+
                 if(match[iX]==-1){
                     stereo.pixel[iX][iY].r = 255;
                     stereo.pixel[iX][iY].g = 0;
                     stereo.pixel[iX][iY].b = 0;
                 }
- */
             }
         }
- 
+
 
         auto end = std::chrono::system_clock::now();
 
@@ -51,6 +56,8 @@ void Stereo(int i = 1)
 
     // 保存
     stereo.Save("depth_stereo.bmp");
+
+	std::cin >> disparity;
 }
 
 void Fusion(int i = 1)

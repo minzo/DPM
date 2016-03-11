@@ -1,4 +1,4 @@
-//==============================================================================
+﻿//==============================================================================
 //
 // DPM (DP Matching)
 //
@@ -164,7 +164,7 @@ protected:
                     // 計算
                     else
                     {
-                        int sx = iX-1;
+                        int sx = std::max(0,iX-1);
                         int ex = [&]{
                             for(int jX=iX+1; jX<X; jX++)
                             {
@@ -176,7 +176,7 @@ protected:
                             return X-1;
                         }();
 
-                        Matching(sx, current[sx], ex, prev[ex], i, skip, id);
+                        Matching(sx, 0, ex, Y-1, i, skip, id);
                         iX = ex;
                     }
                 }
@@ -210,13 +210,15 @@ protected:
         {
             int start = std::max(sx,iY-rightRange);
             int end   = std::min(ex,iY+leftRange);
-            
+
             for(int iX=start; iX<=end; iX++)
             {
                 int i = iX + iY*X;
 
                 // コスト計算
                 double cost = CalcCost(iX,iY,column,skip);
+
+               // std::cout << iX << " " << iY << std::endl;
 
                 node[i].verticalPathCost  = verticalCost(iX, iY, column, cost);
                 node[i].horizontalPathCost= horizontalCost(iX, iY, column, cost);

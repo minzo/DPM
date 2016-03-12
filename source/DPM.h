@@ -31,7 +31,7 @@ public:
     // パラメタ
     int leftRange = 40; // 対象画素から見た対応点の探索範囲左限界までの画素数
     int rightRange= 40; // 対象画素から見た対応点の探索範囲右限界までの画素数
-    
+
     //--------------------------------------------------------------------------
     // @brief コンストラクタ
     // @param input     入力画像
@@ -46,10 +46,10 @@ public:
 
         length    = input.Width() * refer.Width();
         nScanlines= input.Height();
-        
+
         X = input.Width();
         Y = refer.Width();
-        
+
         // ノードの確保
         nodes.resize(threadPool.GetNumThread());
         for(int i=0; i<nodes.size(); i++)
@@ -88,7 +88,7 @@ public:
                 Matching(0, 0, X-1, Y-1, i, skip, id);
             });
         }
-        
+
         SkipDP(skip/2);
     }
 
@@ -115,7 +115,7 @@ protected:
 
         char selectedPathDir = NONE;
     };
-    
+
 
     // 画像
     mi::Image& input;
@@ -149,7 +149,7 @@ protected:
         for(int i=skip; i<nScanlines; i+=(skip*2))
         {
             threadPool.Request([&,i,skip](int id){
-                
+
                 std::vector<int>& prev    = matchPatterns[std::max(i-skip,0)];
                 std::vector<int>& next    = matchPatterns[std::min(i+skip,nScanlines-1)];
                 std::vector<int>& current = matchPatterns[i];
@@ -182,7 +182,7 @@ protected:
                 }
             });
         }
-        
+
         SkipDP(skip/2);
     }
 
@@ -204,7 +204,7 @@ protected:
         sy = std::min(sx+rightRange, std::max(sx-leftRange, sy));
         ey = std::min(ex+rightRange, std::max(ex-leftRange, ey));
 
-        
+
         // ノードの初期化 --------------------------------------------------------
         for(int iY=sy; iY<=ey; iY++)
         {
@@ -218,14 +218,12 @@ protected:
                 // コスト計算
                 double cost = CalcCost(iX,iY,column,skip);
 
-               // std::cout << iX << " " << iY << std::endl;
-
                 node[i].verticalPathCost  = verticalCost(iX, iY, column, cost);
                 node[i].horizontalPathCost= horizontalCost(iX, iY, column, cost);
                 node[i].diagonalPathCost  = diagonalCost(iX, iY, column, cost);
             }
         }
-        
+
         // DPM による最短経路探索 -------------------------------------------------
         // 始点の計算
         node[sx+sy*X].cost = 0;
@@ -236,7 +234,7 @@ protected:
             node[iX].cost = node[iX].horizontalPathCost + node[iX-1].cost;
             node[iX].selectedPathDir = Node::HORIZONTAL;
         }
-        
+
         // 左端の計算
         for(int iY=sy+1; iY<=rightRange; iY++)
         {
@@ -249,7 +247,7 @@ protected:
         {
             int start = std::max(sx+1,iY-rightRange);
             int end   = std::min(ex,iY+leftRange);
-            
+
             for(int iX=start; iX<=end; iX++)
             {
                 // ノードのインデックスを計算 (現在,縦,横,斜め)
@@ -257,15 +255,15 @@ protected:
                 int nv = iX + (iY-1)*X;
                 int nh = (iX-1) + iY*X;
                 int nd = (iX-1) + (iY-1)*X;
-                
+
                 // コスト計算
                 double vCost = node[ni].verticalPathCost   + node[nv].cost;
                 double hCost = node[ni].horizontalPathCost + node[nh].cost;
                 double dCost = node[ni].diagonalPathCost   + node[nd].cost;
-                
+
                 // 最小コスト計算
                 node[ni].cost = std::min({vCost,hCost,dCost});
-                
+
                 // 選んだパスを記録
                 //   double型だが計算はしていないので bit が一致する
                 if(node[ni].cost == dCost) {
@@ -287,13 +285,13 @@ protected:
         // Backtrace -----------------------------------------------------------
         int iX = ex;
         int iY = ey;
-        
+
         std::vector<int>& matchPattern = matchPatterns[column];
-        
+
         while( iX>sx || iY>sy )
         {
             matchPattern[iX] = iY;
-            
+
             switch( node[iX+iY*X].selectedPathDir )
             {
                 case Node::VERTICAL  : iY--; break;

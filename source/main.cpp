@@ -10,8 +10,8 @@
 
 void Stereo(int i = 1)
 {
-    mi::Image left("color_left.bmp");
-    mi::Image right("color_right.bmp");
+    mi::Image left("input/tsukuba/color_left.bmp");
+    mi::Image right("input/tsukuba/color_right.bmp");
     mi::Image stereo(left.Bit(), left.Width(), left.Height());
 
     DPMS dpms(left, right, 8);
@@ -24,6 +24,7 @@ void Stereo(int i = 1)
 
         dpms.DP(8, 13, 4, 80, disparity);
 
+        // 視差画像の生成
         for(int iY=0; iY<stereo.Height(); iY++) {
             std::vector<int>& match = dpms.GetMatchPattern(iY);
             for(int iX=0; iX<stereo.Width(); iX++) {
@@ -39,7 +40,6 @@ void Stereo(int i = 1)
         std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
         std::cout << " msec." << std::endl;
     }
-
 
     // 保存
     stereo.Save("depth_stereo.bmp");
@@ -60,7 +60,7 @@ void Fusion(int i = 1)
         // マッチング
         dpmf.DP(8, 0.30, 0.03);
 
-        // ピクセルセット
+        // ピクセルの置き換え
         for(int iY=0; iY<laser.Height(); iY++) {
             std::vector<int>& match = dpmf.GetMatchPattern(iY);
             for(int iX=0; iX<laser.Width(); iX++) {
@@ -79,6 +79,8 @@ void Fusion(int i = 1)
     // 保存
     fusion.Save("depth_fusion.bmp");
 }
+
+
 
 
 int main(int argc, char* argv[])

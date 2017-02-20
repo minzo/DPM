@@ -38,11 +38,11 @@ public:
     // @param reference 正確な距離情報の参照画像
     // @param threads   スレッド数
     //--------------------------------------------------------------------------
-    DPM(mi::Image& input, mi::Image& reference,
-        int threads = std::thread::hardware_concurrency())
-        : input(input),
-          refer(reference),
-          threadPool(threads) {
+    DPM(mi::Image& input, mi::Image& reference, int threads = std::thread::hardware_concurrency())
+        : input(input)
+        , refer(reference)
+        , threadPool(threads)
+    {
 
         length    = input.Width() * refer.Width();
         nScanlines= input.Height();
@@ -70,7 +70,7 @@ public:
     // @brief マッチングしたパターンを取得
     // @param column 取得するスキャンライン
     //--------------------------------------------------------------------------
-    std::vector<int>& GetMatchPattern(unsigned int column)
+    const std::vector<int>& getMatchPattern(unsigned int column)
     {
         return matchPatterns[column];
     }
@@ -80,16 +80,16 @@ public:
     // @brief DP マッチングによる対応付けをおこなう
     // @param skip 飛び越し量
     //--------------------------------------------------------------------------
-    virtual void DP(int skip)
+    virtual void dp(int skip)
     {
         for(int i=0; i<nScanlines; i+=skip)
         {
             threadPool.Request([&,i,skip](int id){
-                Matching(0, 0, X-1, Y-1, i, skip, id);
+                matching(0, 0, X-1, Y-1, i, skip, id);
             });
         }
 
-        SkipDP(skip/2);
+        skipDP(skip/2);
     }
 
 protected:
@@ -139,7 +139,7 @@ protected:
     // @brief 補完する飛び越しつき DP マッチングによる対応付けをおこなう
     // @param skip 飛び越し量
     //--------------------------------------------------------------------------
-    void SkipDP(int skip)
+    void skipDP(int skip)
     {
         if(skip == 0)
         {
@@ -176,14 +176,14 @@ protected:
                             return X-1;
                         }();
 
-                        Matching(sx, 0, ex, Y-1, i, skip, id);
+                        matching(sx, 0, ex, Y-1, i, skip, id);
                         iX = ex;
                     }
                 }
             });
         }
 
-        SkipDP(skip/2);
+        skipDP(skip/2);
     }
 
     //--------------------------------------------------------------------------
@@ -196,7 +196,7 @@ protected:
     // @param skip   飛び越した量(マッチング済みの走査線までの距離)
     // @param id     スレッド番号
     //--------------------------------------------------------------------------
-    void Matching(int sx, int sy, int ex, int ey, int column, int skip, int id)
+    void matching(int sx, int sy, int ex, int ey, int column, int skip, int id)
     {
         std::vector<Node>& node = nodes[id];
 
@@ -216,7 +216,7 @@ protected:
                 int i = iX + iY*X;
 
                 // コスト計算
-                double cost = CalcCost(iX,iY,column,skip);
+                double cost = calcCost(iX,iY,column,skip);
 
                 node[i].verticalPathCost  = verticalCost(iX, iY, column, cost);
                 node[i].horizontalPathCost= horizontalCost(iX, iY, column, cost);
@@ -268,10 +268,12 @@ protected:
                 //   double型だが計算はしていないので bit が一致する
                 if(node[ni].cost == dCost) {
                     node[ni].selectedPathDir = Node::DIAGONAL;
-                }else
+                }
+                else
                 if(node[ni].cost == vCost) {
                     node[ni].selectedPathDir = Node::VERTICAL;
-                }else
+                }
+                else
                 if(node[ni].cost == hCost) {
                     node[ni].selectedPathDir = Node::HORIZONTAL;
                 }
@@ -315,7 +317,7 @@ protected:
     // @param column DPする走査線の位置
     // @param skip   マッチング済みの走査線までの距離
     //--------------------------------------------------------------------------
-    virtual double CalcCost(int x, int y, int column, int skip) = 0;
+    virtual double calcCost(int x, int y, int column, int skip) = 0;
 
     //--------------------------------------------------------------------------
     // @brief 縦・横・斜, それぞれのパスに設定するコスト

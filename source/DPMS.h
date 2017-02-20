@@ -1,6 +1,6 @@
 ﻿//==============================================================================
 //
-// DPMS (DP Matching)
+// DPMS (DP Matching Stereo)
 //
 //==============================================================================
 #ifndef _DPMS_H_
@@ -13,7 +13,8 @@
 // DP Matching Stereo
 //
 //------------------------------------------------------------------------------
-class DPMS : public DPM {
+class DPMS : public DPM
+{
 public:
 
     //--------------------------------------------------------------------------
@@ -38,7 +39,7 @@ public:
     // @param threshold    コスト計算時に上下の画素の参照を打ち切る閾値
     // @param maxDisparity 想定する最大の視差
     //--------------------------------------------------------------------------
-    virtual void DP(int skip, double weight, int rowRange, int threshold, int maxDisparity)
+    virtual void dp(int skip, double weight, int rowRange, int threshold, int maxDisparity)
     {
         this->weight = weight;
         this->rowRange = rowRange;
@@ -55,12 +56,12 @@ public:
         int length   = input.Height() / nThreads;
 
         for(int i=0; i<nThreads; i++) {
-            threadPool.Request([&,i,length](int id){ Sobel(i*length, length);});
+            threadPool.Request([&,i,length](int id){ sobel(i*length, length);});
         }
 
         threadPool.Join();
 
-        DPM::DP(skip);
+        DPM::dp(skip);
 
         threadPool.Join();
 
@@ -75,7 +76,7 @@ protected:
     // @param column DPする走査線の位置
     // @param skip   マッチング済みの走査線までの距離
     //--------------------------------------------------------------------------
-    virtual double CalcCost(int x, int y, int column, int skip)
+    virtual double calcCost(int x, int y, int column, int skip)
     {
         auto norm = [&](int x, int y, int column) {
             double r = input.pixel[x][column].r-refer.pixel[y][column].r;
@@ -123,7 +124,7 @@ protected:
     //--------------------------------------------------------------------------
     // @brief エッジ抽出
     //--------------------------------------------------------------------------
-    void Sobel(int start, int length)
+    void sobel(int start, int length)
     {
         const int w = input.Width() - 1;
         const int h = input.Height()- 1;

@@ -8,6 +8,10 @@
 #include "DPMS.h"
 #include "DPMF.h"
 
+//-----------------------------------------------------------------------------
+// @brief ステレオマッチングして処理にかかった時間を print する
+// @param i 計測回数
+//-----------------------------------------------------------------------------
 void Stereo(int i = 1)
 {
     mi::Image left("input/tsukuba/color_left.bmp");
@@ -22,17 +26,19 @@ void Stereo(int i = 1)
     {
         auto start = std::chrono::system_clock::now();
 
-        dpms.DP(8, 13, 4, 80, disparity);
+        dpms.dp(8, 13, 4, 80, disparity);
 
         // 視差画像の生成
-        for(int iY=0; iY<stereo.Height(); iY++) {
-            std::vector<int>& match = dpms.GetMatchPattern(iY);
-            for(int iX=0; iX<stereo.Width(); iX++) {
+        for(int iY=0; iY<stereo.Height(); iY++)
+        {
+            const std::vector<int>& match = dpms.getMatchPattern(iY);
+
+            for(int iX=0; iX<stereo.Width(); iX++)
+            {
                 stereo.pixel[iX][iY].r = std::min(std::abs(match[iX] - iX) * 255.0/ disparity, 255.0);
                 stereo.pixel[iX][iY].b = stereo.pixel[iX][iY].g = stereo.pixel[iX][iY].r;
             }
         }
-
 
         auto end = std::chrono::system_clock::now();
 
@@ -45,6 +51,10 @@ void Stereo(int i = 1)
     stereo.Save("depth_stereo.bmp");
 }
 
+//-----------------------------------------------------------------------------
+// @brief フュージョンして処理にかかった時間を print する
+// @param i 計測回数
+//-----------------------------------------------------------------------------
 void Fusion(int i = 1)
 {
     mi::Image laser("input/depth_laser.bmp");
@@ -58,12 +68,15 @@ void Fusion(int i = 1)
         auto start = std::chrono::system_clock::now();
 
         // マッチング
-        dpmf.DP(8, 0.30, 0.03);
+        dpmf.dp(8, 0.30, 0.03);
 
         // ピクセルの置き換え
-        for(int iY=0; iY<laser.Height(); iY++) {
-            std::vector<int>& match = dpmf.GetMatchPattern(iY);
-            for(int iX=0; iX<laser.Width(); iX++) {
+        for(int iY=0; iY<laser.Height(); iY++)
+        {
+            const std::vector<int>& match = dpmf.getMatchPattern(iY);
+
+            for(int iX=0; iX<laser.Width(); iX++)
+            {
                 fusion.pixel[iX][iY] = laser.pixel[ match[iX] ][iY];
             }
         }
@@ -81,12 +94,12 @@ void Fusion(int i = 1)
 }
 
 
-
-
+//-----------------------------------------------------------------------------
+// @brief main 関数
+//-----------------------------------------------------------------------------
 int main(int argc, char* argv[])
 {
     Stereo();
-//    Fusion();
 
     return 0;
 }

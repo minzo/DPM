@@ -69,6 +69,7 @@ public:
     }
 
 protected:
+
     //--------------------------------------------------------------------------
     // @brief コスト計算
     // @param x      DPテーブルX方向の系列の位置
@@ -78,13 +79,6 @@ protected:
     //--------------------------------------------------------------------------
     virtual double calcCost(int x, int y, int column, int skip)
     {
-        auto norm = [&](int x, int y, int column) {
-            double r = input.pixel[x][column].r-refer.pixel[y][column].r;
-            double g = input.pixel[x][column].g-refer.pixel[y][column].g;
-            double b = input.pixel[x][column].b-refer.pixel[y][column].b;
-            return sqrt(r*r+g*g+b*b) / 255.0;
-        };
-
         // 画素数
         int count = 1;
 
@@ -94,14 +88,14 @@ protected:
         // 下方向
         for(int i=1; column+i<nScanlines && edge.pixel[x][column+i].g && i<rowRange; i++)
         {
-            _d += norm(x,y,column+i);
+            _d += norm(x, y, column+i);
             count++;
         }
 
         // 上方向
         for(int i=1; column-i>=0 && edge.pixel[x][column-i].g && i<rowRange; i++)
         {
-            _d += norm(x,y,column-i);
+            _d += norm(x, y, column-i);
             count++;
         }
 
@@ -122,9 +116,22 @@ protected:
     }
 
     //--------------------------------------------------------------------------
-    // @brief エッジ抽出
+    // @brief ノルムの計算
     //--------------------------------------------------------------------------
-    void sobel(int start, int length)
+    inline double norm(int x, int y, int column)
+    {
+        const mi::RGB& inputPixel = input.pixel[x][column];
+        const mi::RGB& referPixel = refer.pixel[y][column];
+        double r = inputPixel.r-referPixel.r;
+        double g = inputPixel.g-referPixel.g;
+        double b = inputPixel.b-referPixel.b;
+        return sqrt(r*r+g*g+b*b) / 255.0;
+    }
+
+    //--------------------------------------------------------------------------
+    // @brief エッジ抽出  G要素には閾値より大きければ 1 が入る
+    //--------------------------------------------------------------------------
+    inline void sobel(int start, int length)
     {
         const int w = input.Width() - 1;
         const int h = input.Height()- 1;
@@ -135,29 +142,23 @@ protected:
         for(int iY=start; iY<start+length; iY++) {
             for(int iX=1; iX<w-1; iX++){
 
-                int pxr = (input.pixel[iX+1][iY-1].r - input.pixel[iX-1][iY-1].r)
-                        + (input.pixel[iX+1][iY+1].r - input.pixel[iX-1][iY+1].r)
-                        + 2 * (input.pixel[iX+1][iY].r - input.pixel[iX-1][iY].r);
+                const mi::RGB& rt = input.pixel[iX+1][iY-1]; // right top
+                const mi::RGB& lt = input.pixel[iX-1][iY-1]; // left top
+                const mi::RGB& rb = input.pixel[iX+1][iY+1]; // right bottom
+                const mi::RGB& lb = input.pixel[iX-1][iY+1]; // left bottom
 
-                int pyr = (input.pixel[iX-1][iY+1].r - input.pixel[iX-1][iY-1].r)
-                        + (input.pixel[iX+1][iY+1].r - input.pixel[iX+1][iY-1].r)
-                        + 2 * (input.pixel[iX][iY+1].r - input.pixel[iX][iY-1].r);
+                const mi::RGB& rm = input.pixel[iX+1][iY]; // right middle
+                const mi::RGB& lm = input.pixel[iX-1][iY]; // left middle
+                const mi::RGB& ct = input.pixel[iX][iY-1]; // center top
+                const mi::RGB& cb = input.pixel[iX][iY+1]; // center bottom
 
-                int pxg = (input.pixel[iX+1][iY-1].g - input.pixel[iX-1][iY-1].g)
-                        + (input.pixel[iX+1][iY+1].g - input.pixel[iX-1][iY+1].g)
-                        + 2 * (input.pixel[iX+1][iY].g - input.pixel[iX-1][iY].g);
+                int pxr = (rt.r - lt.r) + (rb.r - lb.r) + 2 * (rm.r - lm.r);
+                int pxg = (rt.g - lt.g) + (rb.g - lb.g) + 2 * (rm.g - lm.g);
+                int pxb = (rt.b - lt.b) + (rb.b - lb.b) + 2 * (rm.b - lm.b);
 
-                int pyg = (input.pixel[iX-1][iY+1].g - input.pixel[iX-1][iY-1].g)
-                        + (input.pixel[iX+1][iY+1].g - input.pixel[iX+1][iY-1].g)
-                        + 2 * (input.pixel[iX][iY+1].g - input.pixel[iX][iY-1].g);
-
-                int pxb = (input.pixel[iX+1][iY-1].b - input.pixel[iX-1][iY-1].b)
-                        + (input.pixel[iX+1][iY+1].b - input.pixel[iX-1][iY+1].b)
-                        + 2 * (input.pixel[iX+1][iY].b - input.pixel[iX-1][iY].b);
-
-                int pyb = (input.pixel[iX-1][iY+1].b - input.pixel[iX-1][iY-1].b)
-                        + (input.pixel[iX+1][iY+1].b - input.pixel[iX+1][iY-1].b)
-                        + 2 * (input.pixel[iX][iY+1].b - input.pixel[iX][iY-1].b);
+                int pyr = (lb.r - lt.r) + (rb.r - rt.r) + 2 * (cb.r - ct.r);
+                int pyg = (lb.g - lt.g) + (rb.g - rt.g) + 2 * (cb.g - ct.g);
+                int pyb = (lb.b - lt.b) + (rb.b - rt.b) + 2 * (cb.b - ct.b);
 
                 int k = (pxr*pxr+pyr*pyr + pxg*pxg+pyg*pyg + pxb*pxb+pyb*pyb)/9;
 

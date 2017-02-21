@@ -1,4 +1,13 @@
-.vs
-.DS_store
+# for Makefile
 obj/*
 *.d
+
+# for Mac
+.DS_store
+
+# for VisualStudio
+.vcxproj.filter
+.vcxproj.user
+.vs
+.VC.db
+.sdf
